@@ -45,6 +45,7 @@ export interface Candidate {
   filename: string;
   status: CandidateStatus;
   error?: string;
+  rawText?: string;
   cv?: ParsedCV;
   score?: ScoreBreakdown;
   insights?: CandidateInsights;

@@ -111,7 +111,13 @@ export async function setJobAudit(id: string, audit: AuditResult) {
 export async function setJobEmbedding(id: string, embedding: number[]) {
   if (useSupabase()) {
     const sb = getServiceSupabase()!;
-    await sb.from("jobs").update({ jd_embedding: embedding }).eq("id", id);
+    // pgvector columns are surfaced as `string` in generated types but
+    // accept a `number[]` on write — the driver serializes to the
+    // pgvector literal.
+    await sb
+      .from("jobs")
+      .update({ jd_embedding: embedding as unknown as string })
+      .eq("id", id);
     return;
   }
   await withStore((s) => {
@@ -127,7 +133,7 @@ export async function getJobEmbedding(id: string): Promise<number[] | null> {
       .select("jd_embedding")
       .eq("id", id)
       .maybeSingle();
-    return (data?.jd_embedding as number[] | null) ?? null;
+    return parseVector(data?.jd_embedding);
   }
   return readStore((s) => s.jdEmbeddings[id] ?? null);
 }
@@ -184,6 +190,7 @@ function summarize(j: Job, cands: Candidate[]): JobSummary {
 export async function createCandidate(input: {
   jobId: string;
   filename: string;
+  rawText?: string;
 }): Promise<Candidate> {
   const id = uid("cand");
   const now = new Date().toISOString();
@@ -191,6 +198,7 @@ export async function createCandidate(input: {
     id,
     jobId: input.jobId,
     filename: input.filename,
+    rawText: input.rawText,
     status: "queued",
     createdAt: now,
     updatedAt: now,
@@ -199,12 +207,15 @@ export async function createCandidate(input: {
     const sb = getServiceSupabase()!;
     const { data, error } = await sb
       .from("candidate_jobs")
+      // raw_text was added in migration 0006 but isn't in the generated
+      // types yet — cast keeps the strict typing local.
       .insert({
         id,
         job_id: input.jobId,
         filename: input.filename,
         status: "queued",
-      })
+        raw_text: input.rawText ?? null,
+      } as never)
       .select()
       .single();
     if (error) throw error;
@@ -282,7 +293,10 @@ export async function setCandidateCv(id: string, cv: ParsedCV) {
 export async function setCandidateEmbedding(id: string, embedding: number[]) {
   if (useSupabase()) {
     const sb = getServiceSupabase()!;
-    await sb.from("candidate_jobs").update({ cv_embedding: embedding }).eq("id", id);
+    await sb
+      .from("candidate_jobs")
+      .update({ cv_embedding: embedding as unknown as string })
+      .eq("id", id);
     return;
   }
   await withStore((s) => {
@@ -298,9 +312,29 @@ export async function getCandidateEmbedding(id: string): Promise<number[] | null
       .select("cv_embedding")
       .eq("id", id)
       .maybeSingle();
-    return (data?.cv_embedding as number[] | null) ?? null;
+    return parseVector(data?.cv_embedding);
   }
   return readStore((s) => s.cvEmbeddings[id] ?? null);
+}
+
+/**
+ * Supabase returns pgvector columns as the textual representation
+ * `"[0.1, 0.2, ...]"`, not as a `number[]`. Without this, downstream
+ * cosine math returns NaN (string indexing → char × char) and every
+ * score.semantic / score.overall ends up as `null`.
+ */
+function parseVector(v: unknown): number[] | null {
+  if (v == null) return null;
+  if (Array.isArray(v)) return v as number[];
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v) as unknown;
+      return Array.isArray(parsed) ? (parsed as number[]) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 export async function setCandidateScore(id: string, score: ScoreBreakdown) {
@@ -348,10 +382,22 @@ export async function rankCandidates(jobId: string) {
 
 /* -------------- Queue -------------- */
 
+// The generated Supabase types only include `tick_worker`; the pgmq
+// wrappers live in the public schema (migration 0004) but aren't part of
+// the codegen surface yet. Bypass the strict overload here — each call
+// site still validates the JSON args at runtime.
+type RpcCall = (
+  fn: string,
+  args?: Record<string, unknown>,
+) => Promise<{ data: unknown; error: unknown }>;
+
 export async function enqueueCandidate(candidateId: string, jobId: string) {
   if (useSupabase()) {
     const sb = getServiceSupabase()!;
-    await sb.rpc("pgmq_send", { qname: "cv_jobs", msg: { candidateId, jobId } });
+    await (sb.rpc as unknown as RpcCall)("pgmq_send", {
+      qname: "cv_jobs",
+      msg: { candidateId, jobId },
+    });
     return;
   }
   await withStore((s) => {
@@ -362,15 +408,15 @@ export async function enqueueCandidate(candidateId: string, jobId: string) {
 export async function readQueueBatch(limit = 5) {
   if (useSupabase()) {
     const sb = getServiceSupabase()!;
-    const { data } = await sb.rpc("pgmq_read", {
+    const { data } = await (sb.rpc as unknown as RpcCall)("pgmq_read", {
       qname: "cv_jobs",
       vt: 60,
       qty: limit,
     });
-    return (data ?? []) as Array<{
+    return ((data ?? []) as Array<{
       msg_id: number;
       message: { candidateId: string; jobId: string };
-    }>;
+    }>);
   }
   return readStore((s) => s.queue.slice(0, limit)).then((items) =>
     items.map((m, i) => ({ msg_id: i, message: m })),
@@ -380,7 +426,10 @@ export async function readQueueBatch(limit = 5) {
 export async function archiveQueue(msgId: number) {
   if (useSupabase()) {
     const sb = getServiceSupabase()!;
-    await sb.rpc("pgmq_archive", { qname: "cv_jobs", msg_id: msgId });
+    await (sb.rpc as unknown as RpcCall)("pgmq_archive", {
+      qname: "cv_jobs",
+      msg_id: msgId,
+    });
     return;
   }
   await withStore((s) => {
@@ -417,6 +466,7 @@ function rowToCandidate(r: JobRow): Candidate {
     filename: r.filename as string,
     status: r.status as CandidateStatus,
     error: (r.error as string | undefined) ?? undefined,
+    rawText: ((r as Record<string, unknown>).raw_text as string | undefined) ?? undefined,
     cv: (r.cv as ParsedCV | undefined) ?? undefined,
     score: (r.score as ScoreBreakdown | undefined) ?? undefined,
     insights: (r.insights as CandidateInsights | undefined) ?? undefined,
