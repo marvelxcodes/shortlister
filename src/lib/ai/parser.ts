@@ -12,63 +12,111 @@ import { nim, REASONING_MODEL, isNimEnabled } from "./provider";
  * heuristic parser so the platform stays runnable for dev.
  * ============================================================ */
 
-const JD_SYSTEM = `You are a senior recruiter. Given a job description, extract a strict structured object that captures the required role and skills.
-Rules:
-- mustHaveSkills: the explicit requirements. Use canonical names (e.g. "React" not "React.js development experience").
-- niceToHaveSkills: things called "preferred", "bonus", "nice to have".
-- minYears / maxYears: extract from text. Reasonable inference is allowed.
-- requirements: pairs of (skill, weight 0..1, required) using your judgement.
-- No commentary, only JSON for the schema.`;
+const JD_SYSTEM = `You are a senior recruiter. Given a job description, extract a strict structured JSON object that captures the role and skill requirements.
 
-const CV_SYSTEM = `You are a careful parser of resumes. Convert the raw text into a structured candidate object.
-Rules:
-- name: full name as written. If missing, use "Unknown Candidate".
-- totalYears: sum of meaningful professional tenure. Use your best estimate.
-- skills: dedupe to canonical names (e.g. "React" not "React.js").
-- roles: each in reverse-chronological order. Compute durationMonths when possible.
-- highlights: short bullet summaries of impact (verbs first).
-- Output JSON only for the schema. Do not invent skills that aren't supported by the text.`;
+Required fields — ALL must be present:
+- title (string): the role title, e.g. "Senior Full Stack Engineer". If absent, infer the most likely title from the text.
+- summary (string): a 1-2 sentence summary of the role.
+- seniority (enum): one of "intern" | "junior" | "mid" | "senior" | "staff" | "principal". Infer from the title/text.
+- minYears (integer 0..50): minimum years of experience. Infer if not stated.
+- mustHaveSkills (string[]): explicit requirements. Use canonical names (e.g. "React" not "React.js development experience").
+- niceToHaveSkills (string[]): things called "preferred", "bonus", "nice to have".
+- responsibilities (string[]): short bullet phrases. Empty array if none.
+- requirements (object[]): each item is an OBJECT with these keys — { "skill": string, "weight": number 0..1, "required": boolean, "category"?: string }. Do NOT use a tuple/array form like ["skill", 0.8, true]; emit a JSON object per item.
+
+Optional:
+- maxYears (integer 0..50): omit the field entirely if unknown — do NOT emit null.
+
+Output ONLY the JSON object. No commentary, no markdown fences.`;
+
+const CV_SYSTEM = `You are a careful parser of resumes. Convert the raw text into a strict structured JSON candidate object.
+
+Required fields — ALL must be present:
+- name (string): full name as written. If missing, use "Unknown Candidate".
+- totalYears (number 0..60): sum of meaningful professional tenure. Best estimate.
+- skills (object[]): each item is { "name": string, "years"?: number, "evidence"?: string }. Dedupe to canonical names (e.g. "React" not "React.js"). Do not invent skills not supported by the text.
+- roles (object[]): each item is { "company": string, "title": string, "startYear"?: integer, "endYear"?: integer | null, "durationMonths"?: integer, "highlights": string[] }. Reverse-chronological. Compute durationMonths when possible.
+- education (object[]): each item is { "institution": string, "degree"?: string, "field"?: string, "startYear"?: integer, "endYear"?: integer }.
+- certifications (string[]): empty array if none.
+- links (string[]): empty array if none.
+
+Optional (omit entirely if unknown — do NOT emit null):
+- email (string), location (string), summary (string).
+
+Output ONLY the JSON object. No commentary, no markdown fences.`;
 
 export async function parseJd(rawText: string): Promise<ParsedJD> {
-  if (!isNimEnabled()) return heuristicJd(rawText);
-  return runWithRetry(async (errorHint) => {
-    const { object } = await generateObject({
-      model: nim(REASONING_MODEL),
-      schema: ParsedJD,
-      system: JD_SYSTEM,
-      prompt: errorHint
-        ? `Previous attempt failed validation: ${errorHint}\n\nJD:\n${rawText}`
-        : `JD:\n${rawText}`,
+  if (!isNimEnabled()) {
+    return heuristicJd(rawText);
+  }
+  try {
+    return await runWithRetry(async (errorHint) => {
+      const { object } = await generateObject({
+        model: nim(REASONING_MODEL),
+        schema: ParsedJD,
+        schemaName: "ParsedJobDescription",
+        schemaDescription: "Structured job description extracted from raw text.",
+        system: JD_SYSTEM,
+        prompt: errorHint
+          ? `Previous attempt failed validation. Fix these errors and try again:\n${errorHint}\n\nJD:\n${rawText}`
+          : `JD:\n${rawText}`,
+      });
+      return object;
     });
-    return object;
-  });
+  } catch {
+    // Last-ditch fallback so a flaky NIM response never blocks the pipeline.
+    return heuristicJd(rawText);
+  }
 }
 
 export async function parseCv(rawText: string): Promise<ParsedCV> {
-  if (!isNimEnabled()) return heuristicCv(rawText);
-  return runWithRetry(async (errorHint) => {
-    const { object } = await generateObject({
-      model: nim(REASONING_MODEL),
-      schema: ParsedCV,
-      system: CV_SYSTEM,
-      prompt: errorHint
-        ? `Previous attempt failed validation: ${errorHint}\n\nCV:\n${rawText}`
-        : `CV:\n${rawText}`,
+  if (!isNimEnabled()) {
+    return heuristicCv(rawText);
+  }
+  try {
+    return await runWithRetry(async (errorHint) => {
+      const { object } = await generateObject({
+        model: nim(REASONING_MODEL),
+        schema: ParsedCV,
+        schemaName: "ParsedCV",
+        schemaDescription: "Structured CV/resume extracted from raw text.",
+        system: CV_SYSTEM,
+        prompt: errorHint
+          ? `Previous attempt failed validation. Fix these errors and try again:\n${errorHint}\n\nCV:\n${rawText}`
+          : `CV:\n${rawText}`,
+      });
+      return object;
     });
-    return object;
-  });
+  } catch {
+    return heuristicCv(rawText);
+  }
 }
 
 async function runWithRetry<T>(fn: (hint?: string) => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (e instanceof z.ZodError) {
-      return await fn(JSON.stringify(e.issues));
-    }
-    return await fn(msg);
+    return await fn(extractHint(e));
   }
+}
+
+function extractHint(err: unknown): string {
+  // generateObject wraps validation failures in NoObjectGeneratedError →
+  // TypeValidationError → ZodError. Walk the cause chain so the retry
+  // prompt gets the actionable list of field problems, not a generic
+  // "did not match schema" message.
+  let current: unknown = err;
+  for (let i = 0; i < 5 && current; i++) {
+    if (current instanceof z.ZodError) {
+      return JSON.stringify(current.issues).slice(0, 2000);
+    }
+    if (current && typeof current === "object" && "cause" in current) {
+      current = (current as { cause?: unknown }).cause;
+      continue;
+    }
+    break;
+  }
+  return err instanceof Error ? err.message.slice(0, 500) : String(err).slice(0, 500);
 }
 
 /* ============================================================
