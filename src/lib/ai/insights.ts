@@ -14,13 +14,15 @@ import { nim, REASONING_MODEL, isNimEnabled } from "./provider";
  * This keeps prompts small + grounded in the deterministic match.
  * ============================================================ */
 
-const SYS = `You are a senior hiring manager assistant. Given (a) the role requirements, (b) the candidate's matched skills, and (c) the gaps, produce a JSON object that includes:
- - justification: a short (3-5 sentence) ranking justification grounded only in the inputs.
- - strengths: a few crisp bullet phrases.
- - risks: a few crisp bullet phrases referencing the gaps.
- - interviewQuestions: 4 tailored questions that probe the exact gaps. Each has 1-3 probes and a short "targetGap".
-You must not invent facts about the candidate not present in the inputs.
-Return JSON only.`;
+const SYS = `You are a senior hiring manager assistant. Given (a) the role requirements, (b) the candidate's matched skills, and (c) the gaps, produce a strict JSON object.
+
+Required fields — ALL must be present:
+- justification (string): 3-5 sentence ranking justification grounded only in the inputs.
+- strengths (string[]): a few crisp bullet phrases.
+- risks (string[]): a few crisp bullet phrases referencing the gaps.
+- interviewQuestions (object[]): exactly 4 items, each an OBJECT with keys { "question": string, "probes": string[] (1-3 items), "targetGap"?: string, "difficulty": "easy" | "medium" | "hard" }.
+
+You must not invent facts about the candidate not present in the inputs. Output ONLY the JSON object — no commentary, no markdown fences.`;
 
 export async function generateInsights(input: {
   jd: ParsedJD;
@@ -34,6 +36,9 @@ export async function generateInsights(input: {
     const { object } = await generateObject({
       model: nim(REASONING_MODEL),
       schema: CandidateInsights,
+      schemaName: "CandidateInsights",
+      schemaDescription:
+        "Hiring justification, strengths, risks, and 4 tailored interview questions.",
       system: SYS,
       prompt,
     });
