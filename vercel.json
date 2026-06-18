@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "src/app/api/jobs/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/jobs/extract-jd/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/jobs/[id]/progress/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/worker/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/evals/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/notifications/route.ts": {
+      "maxDuration": 10
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/worker?cron=1",
+      "schedule": "* * * * *"
+    }
+  ]
+}

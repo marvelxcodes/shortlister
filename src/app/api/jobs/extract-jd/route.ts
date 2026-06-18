@@ -2,6 +2,7 @@ import { extractText } from "@/lib/ai/extractor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const MAX_BYTES = 5 * 1024 * 1024;
 

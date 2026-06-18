@@ -4,28 +4,21 @@ import { finalizeJobIfReady, processCandidate } from "@/lib/workers/pipeline";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 const BATCH_SIZE = Number(process.env.WORKER_BATCH_SIZE ?? "5");
 const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY ?? "3");
 
 /**
- * The worker route is fired every few seconds by pg_cron + pg_net (prod)
- * or by manual POSTs (dev). It reads a batch, processes each message in
- * parallel under p-limit, archives on success and surfaces failures via
- * the candidate row's `error` field.
+ * The worker route is the drain endpoint. It is fired by three sources:
+ *   - dev:    in-process `kickWorker()` POST
+ *   - Supabase: pg_cron + pg_net POST every few seconds
+ *   - Vercel: vercel.json cron GET every minute (signed with CRON_SECRET)
  */
-export async function POST(req: Request) {
-  const secret = process.env.WORKER_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? "";
-    if (auth !== `Bearer ${secret}`) {
-      return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
-    }
-  }
-
+async function drain() {
   const messages = await readQueueBatch(BATCH_SIZE);
   if (messages.length === 0) {
-    return Response.json({ ok: true, processed: 0 });
+    return { ok: true as const, processed: 0, failed: 0, errors: [] };
   }
 
   const limit = pLimit(CONCURRENCY);
@@ -47,16 +40,38 @@ export async function POST(req: Request) {
 
   const ok = results.filter((r) => r.status === "fulfilled").length;
   const failed = results.filter((r) => r.status === "rejected").length;
-  return Response.json({
-    ok: true,
+  return {
+    ok: true as const,
     processed: ok,
     failed,
     errors: results
       .filter((r): r is PromiseRejectedResult => r.status === "rejected")
       .map((r) => String(r.reason).slice(0, 200)),
-  });
+  };
 }
 
-export async function GET() {
-  return Response.json({ ok: true, info: "Shortlister worker. POST to drain." });
+function authorized(req: Request): boolean {
+  const auth = req.headers.get("authorization") ?? "";
+  const worker = process.env.WORKER_SECRET;
+  const cron = process.env.CRON_SECRET;
+  // If neither secret is configured, allow (useful for local dev).
+  if (!worker && !cron) return true;
+  if (worker && auth === `Bearer ${worker}`) return true;
+  if (cron && auth === `Bearer ${cron}`) return true;
+  return false;
+}
+
+export async function POST(req: Request) {
+  if (!authorized(req)) {
+    return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+  return Response.json(await drain());
+}
+
+// Vercel cron defaults to GET. Same secret check.
+export async function GET(req: Request) {
+  if (!authorized(req)) {
+    return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+  return Response.json(await drain());
 }
