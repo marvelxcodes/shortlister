@@ -1,0 +1,148 @@
+{
+  "name": "Next.js + AI Senior Engineer",
+  "jd": {
+    "title": "Senior Full-Stack Engineer (Next.js + AI)",
+    "summary": "We're hiring a Senior Full-Stack Engineer to ship an AI-native recruitment SaaS built on Next.js, TypeScript, Postgres and pgvector.",
+    "seniority": "senior",
+    "minYears": 5,
+    "mustHaveSkills": ["TypeScript", "React", "Next.js", "PostgreSQL", "pgvector"],
+    "niceToHaveSkills": ["Vercel AI SDK", "Tailwind CSS", "Embeddings"],
+    "responsibilities": [
+      "Ship production AI features end-to-end",
+      "Own the scoring pipeline and worker fan-out",
+      "Coach the team on type-safe data flow"
+    ],
+    "requirements": []
+  },
+  "candidates": [
+    {
+      "filename": "ava.txt",
+      "expectedRank": 1,
+      "cv": {
+        "name": "Ava Singh",
+        "totalYears": 7,
+        "summary": "Senior full-stack engineer specializing in Next.js, TypeScript and vector search.",
+        "skills": [
+          { "name": "TypeScript" },
+          { "name": "React" },
+          { "name": "Next.js" },
+          { "name": "PostgreSQL" },
+          { "name": "pgvector" },
+          { "name": "Vercel AI SDK" },
+          { "name": "Tailwind CSS" }
+        ],
+        "roles": [
+          {
+            "company": "Anthropic",
+            "title": "Senior Software Engineer",
+            "startYear": 2022,
+            "endYear": null,
+            "durationMonths": 48,
+            "highlights": ["Built AI eval harness", "Owned scoring pipeline"]
+          },
+          {
+            "company": "Vercel",
+            "title": "Senior Engineer",
+            "startYear": 2018,
+            "endYear": 2022,
+            "durationMonths": 48,
+            "highlights": ["Next.js infra"]
+          }
+        ],
+        "education": [
+          { "institution": "Stanford University", "degree": "B.S. Computer Science" }
+        ],
+        "certifications": [],
+        "links": []
+      }
+    },
+    {
+      "filename": "bilal.txt",
+      "expectedRank": 2,
+      "cv": {
+        "name": "Bilal Hassan",
+        "totalYears": 6,
+        "summary": "Full-stack engineer focused on React + Node.",
+        "skills": [
+          { "name": "TypeScript" },
+          { "name": "React" },
+          { "name": "Node.js" },
+          { "name": "PostgreSQL" },
+          { "name": "GraphQL" }
+        ],
+        "roles": [
+          {
+            "company": "Stripe",
+            "title": "Software Engineer",
+            "startYear": 2019,
+            "endYear": null,
+            "durationMonths": 60,
+            "highlights": ["Payments infra"]
+          }
+        ],
+        "education": [
+          { "institution": "UC Berkeley", "degree": "B.S. Computer Science" }
+        ],
+        "certifications": [],
+        "links": []
+      }
+    },
+    {
+      "filename": "claire.txt",
+      "expectedRank": 3,
+      "cv": {
+        "name": "Claire Yamamoto",
+        "totalYears": 4,
+        "summary": "Mobile engineer transitioning to web.",
+        "skills": [
+          { "name": "Swift" },
+          { "name": "iOS" },
+          { "name": "Kotlin" },
+          { "name": "React Native" }
+        ],
+        "roles": [
+          {
+            "company": "Block",
+            "title": "iOS Engineer",
+            "startYear": 2021,
+            "endYear": null,
+            "durationMonths": 48,
+            "highlights": ["Shipped Cash app features"]
+          }
+        ],
+        "education": [
+          { "institution": "Carnegie Mellon University", "degree": "B.S. Computer Science" }
+        ],
+        "certifications": [],
+        "links": []
+      }
+    },
+    {
+      "filename": "dmitri.txt",
+      "expectedRank": 4,
+      "cv": {
+        "name": "Dmitri Volkov",
+        "totalYears": 2,
+        "summary": "Junior frontend engineer.",
+        "skills": [
+          { "name": "JavaScript" },
+          { "name": "Vue" },
+          { "name": "CSS" }
+        ],
+        "roles": [
+          {
+            "company": "Local agency",
+            "title": "Frontend Engineer",
+            "startYear": 2023,
+            "endYear": null,
+            "durationMonths": 24,
+            "highlights": []
+          }
+        ],
+        "education": [],
+        "certifications": [],
+        "links": []
+      }
+    }
+  ]
+}

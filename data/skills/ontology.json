@@ -1,0 +1,146 @@
+{
+  "version": "1.0.0",
+  "disciplines": [
+    {
+      "id": "engineering",
+      "label": "Engineering",
+      "categories": [
+        {
+          "id": "frontend",
+          "label": "Frontend",
+          "skills": [
+            { "id": "react", "label": "React", "aliases": ["react.js", "reactjs"] },
+            { "id": "nextjs", "label": "Next.js", "aliases": ["next", "next.js"], "related": ["react"] },
+            { "id": "vue", "label": "Vue", "aliases": ["vue.js", "vuejs"] },
+            { "id": "svelte", "label": "Svelte", "related": [] },
+            { "id": "angular", "label": "Angular", "aliases": ["angularjs"] },
+            { "id": "tailwind", "label": "Tailwind CSS", "aliases": ["tailwindcss"] },
+            { "id": "typescript", "label": "TypeScript", "aliases": ["ts"] },
+            { "id": "javascript", "label": "JavaScript", "aliases": ["js"] },
+            { "id": "css", "label": "CSS" },
+            { "id": "html", "label": "HTML" }
+          ]
+        },
+        {
+          "id": "backend",
+          "label": "Backend",
+          "skills": [
+            { "id": "node", "label": "Node.js", "aliases": ["node.js", "nodejs"] },
+            { "id": "deno", "label": "Deno" },
+            { "id": "bun", "label": "Bun" },
+            { "id": "python", "label": "Python" },
+            { "id": "django", "label": "Django", "related": ["python"] },
+            { "id": "flask", "label": "Flask", "related": ["python"] },
+            { "id": "fastapi", "label": "FastAPI", "related": ["python"] },
+            { "id": "go", "label": "Go", "aliases": ["golang"] },
+            { "id": "rust", "label": "Rust" },
+            { "id": "java", "label": "Java" },
+            { "id": "spring", "label": "Spring", "aliases": ["spring boot"], "related": ["java"] },
+            { "id": "kotlin", "label": "Kotlin" },
+            { "id": "ruby", "label": "Ruby" },
+            { "id": "rails", "label": "Rails", "aliases": ["ruby on rails"], "related": ["ruby"] },
+            { "id": "csharp", "label": "C#", "aliases": ["c-sharp"] },
+            { "id": "dotnet", "label": ".NET", "aliases": ["dotnet", "asp.net"], "related": ["csharp"] },
+            { "id": "graphql", "label": "GraphQL" },
+            { "id": "rest", "label": "REST APIs", "aliases": ["rest api", "rest"] },
+            { "id": "grpc", "label": "gRPC" }
+          ]
+        },
+        {
+          "id": "data",
+          "label": "Data & Databases",
+          "skills": [
+            { "id": "postgres", "label": "PostgreSQL", "aliases": ["postgres", "pg"] },
+            { "id": "mysql", "label": "MySQL" },
+            { "id": "mongodb", "label": "MongoDB", "aliases": ["mongo"] },
+            { "id": "redis", "label": "Redis" },
+            { "id": "elasticsearch", "label": "Elasticsearch", "aliases": ["elastic"] },
+            { "id": "snowflake", "label": "Snowflake" },
+            { "id": "bigquery", "label": "BigQuery" },
+            { "id": "dbt", "label": "dbt" },
+            { "id": "airflow", "label": "Airflow" },
+            { "id": "spark", "label": "Apache Spark", "aliases": ["spark"] },
+            { "id": "kafka", "label": "Kafka" },
+            { "id": "sql", "label": "SQL" }
+          ]
+        },
+        {
+          "id": "devops",
+          "label": "DevOps & Cloud",
+          "skills": [
+            { "id": "aws", "label": "AWS" },
+            { "id": "gcp", "label": "GCP", "aliases": ["google cloud"] },
+            { "id": "azure", "label": "Azure" },
+            { "id": "docker", "label": "Docker" },
+            { "id": "kubernetes", "label": "Kubernetes", "aliases": ["k8s"] },
+            { "id": "terraform", "label": "Terraform" },
+            { "id": "cicd", "label": "CI/CD" },
+            { "id": "github_actions", "label": "GitHub Actions" },
+            { "id": "linux", "label": "Linux" }
+          ]
+        },
+        {
+          "id": "ai",
+          "label": "AI & ML",
+          "skills": [
+            { "id": "pytorch", "label": "PyTorch" },
+            { "id": "tensorflow", "label": "TensorFlow", "aliases": ["tf"] },
+            { "id": "huggingface", "label": "HuggingFace", "aliases": ["transformers"] },
+            { "id": "langchain", "label": "LangChain" },
+            { "id": "llamaindex", "label": "LlamaIndex" },
+            { "id": "vercel_ai_sdk", "label": "Vercel AI SDK", "aliases": ["ai sdk"] },
+            { "id": "pgvector", "label": "pgvector" },
+            { "id": "vector_db", "label": "Vector databases", "aliases": ["pinecone", "weaviate", "qdrant"] },
+            { "id": "rag", "label": "RAG", "aliases": ["retrieval augmented generation"] },
+            { "id": "embeddings", "label": "Embeddings" },
+            { "id": "fine_tuning", "label": "Fine-tuning" },
+            { "id": "llm", "label": "LLMs", "aliases": ["large language models"] }
+          ]
+        },
+        {
+          "id": "mobile",
+          "label": "Mobile",
+          "skills": [
+            { "id": "swift", "label": "Swift" },
+            { "id": "ios", "label": "iOS", "related": ["swift"] },
+            { "id": "android", "label": "Android", "related": ["kotlin"] },
+            { "id": "react_native", "label": "React Native", "related": ["react"] },
+            { "id": "flutter", "label": "Flutter" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design",
+      "label": "Design",
+      "categories": [
+        {
+          "id": "product_design",
+          "label": "Product Design",
+          "skills": [
+            { "id": "figma", "label": "Figma" },
+            { "id": "design_systems", "label": "Design Systems" },
+            { "id": "interaction_design", "label": "Interaction Design" },
+            { "id": "ux_research", "label": "UX Research" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "product",
+      "label": "Product",
+      "categories": [
+        {
+          "id": "pm",
+          "label": "Product Management",
+          "skills": [
+            { "id": "roadmapping", "label": "Roadmapping" },
+            { "id": "product_strategy", "label": "Product Strategy" },
+            { "id": "user_research", "label": "User Research" },
+            { "id": "analytics", "label": "Analytics", "aliases": ["mixpanel", "amplitude"] }
+          ]
+        }
+      ]
+    }
+  ]
+}
