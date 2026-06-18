@@ -8,7 +8,6 @@ import {
   Users01 as Users2,
   Stars02 as Sparkles,
   ShieldTick as ShieldCheck,
-  File02 as FileText,
   LogOut01 as LogOut,
 } from "@untitledui/icons";
 import { cn } from "@/lib/utils/cn";
@@ -23,7 +22,6 @@ const primary: Item[] = [
   { href: "/", label: "Overview", icon: LayoutGrid },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
   { href: "/candidates", label: "Candidates", icon: Users2 },
-  { href: "/insights", label: "Insights", icon: FileText },
   { href: "/audit", label: "Audit", icon: ShieldCheck },
   { href: "/jobs/new", label: "New job", icon: Sparkles },
 ];
@@ -32,8 +30,29 @@ const secondary: Item[] = [
   { href: "/help", label: "Sign out", icon: LogOut },
 ];
 
+function matchHref(href: string, pathname: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * Of all items whose href is a prefix of the current path, the deepest
+ * one wins. Avoids highlighting `/jobs` when the user is on `/jobs/new`.
+ */
+function activeHref(items: Item[], pathname: string) {
+  let best: string | null = null;
+  for (const it of items) {
+    if (matchHref(it.href, pathname) && (best === null || it.href.length > best.length)) {
+      best = it.href;
+    }
+  }
+  return best;
+}
+
 export function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
+  const activePrimary = activeHref(primary, pathname);
+  const activeSecondary = activeHref(secondary, pathname);
 
   return (
     <aside className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col items-center py-5 md:flex md:w-[76px]">
@@ -46,24 +65,24 @@ export function Sidebar() {
       </Link>
 
       <nav aria-label="Primary" className="flex flex-1 flex-col items-center gap-2">
-        {primary.map((item) => {
-          const active =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname?.startsWith(item.href);
-          return (
-            <SidebarIcon key={item.href} item={item} active={!!active} />
-          );
-        })}
+        {primary.map((item) => (
+          <SidebarIcon
+            key={item.href}
+            item={item}
+            active={item.href === activePrimary}
+          />
+        ))}
       </nav>
 
       <div className="mt-auto flex flex-col items-center gap-2 pt-4">
-        {secondary.map((item) => {
-          const active = pathname?.startsWith(item.href);
-          return (
-            <SidebarIcon key={item.href} item={item} active={!!active} muted />
-          );
-        })}
+        {secondary.map((item) => (
+          <SidebarIcon
+            key={item.href}
+            item={item}
+            active={item.href === activeSecondary}
+            muted
+          />
+        ))}
       </div>
     </aside>
   );
