@@ -8,6 +8,10 @@ export const nim = createOpenAICompatible({
   name: "nvidia-nim",
   baseURL: NIM_BASE_URL,
   apiKey: process.env.NVIDIA_NIM_API_KEY ?? "missing",
+  // NIM's chat endpoints accept response_format: { type: "json_schema", ... }
+  // for the Nemotron family. Without this flag the SDK silently drops the
+  // schema, leaving the model to guess the shape.
+  supportsStructuredOutputs: true,
 });
 
 export const REASONING_MODEL =

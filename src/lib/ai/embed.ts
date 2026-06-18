@@ -1,5 +1,4 @@
-import { embedMany, embed } from "ai";
-import { nim, EMBEDDING_MODEL, isNimEnabled } from "./provider";
+import { EMBEDDING_MODEL, isNimEnabled } from "./provider";
 
 const EMBED_DIM = 1024;
 
@@ -8,24 +7,56 @@ const EMBED_DIM = 1024;
  * - Uses NIM (nv-embedqa-e5-v5 by default) when an API key is present.
  * - Falls back to a deterministic hashed-bag-of-words embedding so the
  *   matcher remains useful for local dev / evals without credentials.
+ *
+ * `nv-embedqa-e5-v5` is an asymmetric retrieval model: the JD is the
+ * `query` side and CVs are the `passage` side. Callers must pass the
+ * correct kind or NIM rejects the request with HTTP 400.
  */
+export type EmbedKind = "query" | "passage";
 
-export async function embedText(text: string): Promise<number[]> {
+const NIM_BASE_URL =
+  process.env.NVIDIA_NIM_BASE_URL ?? "https://integrate.api.nvidia.com/v1";
+
+export async function embedText(
+  text: string,
+  kind: EmbedKind = "passage",
+): Promise<number[]> {
   if (!isNimEnabled()) return hashEmbed(text);
-  const { embedding } = await embed({
-    model: nim.textEmbeddingModel(EMBEDDING_MODEL),
-    value: text,
-  });
-  return embedding;
+  const [v] = await nimEmbed([text], kind);
+  return v;
 }
 
-export async function embedTexts(texts: string[]): Promise<number[][]> {
+export async function embedTexts(
+  texts: string[],
+  kind: EmbedKind = "passage",
+): Promise<number[][]> {
   if (!isNimEnabled()) return texts.map(hashEmbed);
-  const { embeddings } = await embedMany({
-    model: nim.textEmbeddingModel(EMBEDDING_MODEL),
-    values: texts,
+  return nimEmbed(texts, kind);
+}
+
+async function nimEmbed(texts: string[], kind: EmbedKind): Promise<number[][]> {
+  const res = await fetch(`${NIM_BASE_URL}/embeddings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.NVIDIA_NIM_API_KEY ?? ""}`,
+    },
+    body: JSON.stringify({
+      model: EMBEDDING_MODEL,
+      input: texts,
+      input_type: kind,
+      encoding_format: "float",
+      truncate: "END",
+    }),
   });
-  return embeddings;
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`NIM embeddings failed (${res.status}): ${body.slice(0, 300)}`);
+  }
+  const json = (await res.json()) as {
+    data: Array<{ embedding: number[] }>;
+  };
+  return json.data.map((d) => d.embedding);
 }
 
 /** Cosine similarity in [-1, 1]; clamps to [0, 1] for our scoring. */
