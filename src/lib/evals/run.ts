@@ -37,11 +37,11 @@ export async function runEvals(rootDir: string) {
     const raw = await fs.readFile(path.join(dir, file), "utf8");
     const fx = JSON.parse(raw) as Fixture;
 
-    const jdEmbedding = await embedText(jdProfileText(fx.jd));
+    const jdEmbedding = await embedText(jdProfileText(fx.jd), "query");
 
     const scored = await Promise.all(
       fx.candidates.map(async (c) => {
-        const cvEmbedding = await embedText(cvProfileText(c.cv));
+        const cvEmbedding = await embedText(cvProfileText(c.cv), "passage");
         const score = scoreCandidate({
           jd: fx.jd,
           cv: c.cv,

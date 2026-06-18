@@ -1,5 +1,3 @@
-import path from "node:path";
-import { promises as fs } from "node:fs";
 import {
   getCandidate,
   getJob,
@@ -14,31 +12,21 @@ import {
   updateJobStatus,
   listCandidatesForJob,
 } from "@/lib/db/store";
-import { extractText } from "@/lib/ai/extractor";
 import { parseCv } from "@/lib/ai/parser";
 import { embedText } from "@/lib/ai/embed";
 import { scoreCandidate } from "@/lib/scoring/matcher";
 import { generateInsights } from "@/lib/ai/insights";
 import { auditShortlist } from "@/lib/scoring/auditor";
 
-const UPLOAD_DIR = path.join(process.cwd(), ".next", "cache", "uploads");
-
-export async function readUpload(candidateId: string): Promise<Uint8Array> {
-  const file = path.join(UPLOAD_DIR, `${candidateId}.bin`);
-  const buf = await fs.readFile(file);
-  return new Uint8Array(buf);
-}
-
-export async function writeUpload(candidateId: string, data: Uint8Array) {
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  await fs.writeFile(path.join(UPLOAD_DIR, `${candidateId}.bin`), data);
-}
-
 /**
  * Process one candidate end-to-end. Each stage transitions the row's
  * status so the dashboard can light up steps in real time. Errors are
  * caught and persisted, then re-thrown so the worker treats them as
  * a per-message failure (not the whole batch).
+ *
+ * Raw CV text is read from the candidate row (written during ingest by
+ * the server action). Vercel functions have no shared filesystem, so
+ * the previous fs-based handoff between ingest and worker is unsound.
  */
 export async function processCandidate(candidateId: string) {
   const candidate = await getCandidate(candidateId);
@@ -47,16 +35,17 @@ export async function processCandidate(candidateId: string) {
   if (!job) throw new Error(`job ${candidate.jobId} not found`);
 
   try {
-    await setCandidateStatus(candidate.id, "extracting");
-    const bytes = await readUpload(candidate.id);
-    const text = await extractText(bytes, candidate.filename);
+    const text = candidate.rawText ?? "";
+    if (!text.trim()) {
+      throw new Error("CV text missing on candidate row");
+    }
 
     await setCandidateStatus(candidate.id, "parsing");
     const cv = await parseCv(text);
     await setCandidateCv(candidate.id, cv);
 
     await setCandidateStatus(candidate.id, "embedding");
-    const cvEmbedding = await embedText(cvProfileText(cv));
+    const cvEmbedding = await embedText(cvProfileText(cv), "passage");
     await setCandidateEmbedding(candidate.id, cvEmbedding);
 
     const jdEmbedding = (await getJobEmbedding(job.id)) ?? [];
