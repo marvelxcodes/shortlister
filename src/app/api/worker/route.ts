@@ -4,7 +4,7 @@ import { finalizeJobIfReady, processCandidate } from "@/lib/workers/pipeline";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 const BATCH_SIZE = Number(process.env.WORKER_BATCH_SIZE ?? "5");
 const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY ?? "3");

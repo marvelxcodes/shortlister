@@ -6,7 +6,7 @@ import type { JobMetadata } from "@/lib/types/domain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const form = await req.formData();

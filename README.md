@@ -80,7 +80,7 @@ routes — no separate Python service.
 | Embeddings | NIM `nv-embedqa-e5-v5`, asymmetric query/passage | [`src/lib/ai/embed.ts`](src/lib/ai/embed.ts) |
 | Queue | `pgmq` (Supabase) in prod, in-memory in dev | [`src/lib/db/store.ts`](src/lib/db/store.ts) |
 | Worker | Route handler + `p-limit`, drains a batch per tick | [`src/app/api/worker/route.ts`](src/app/api/worker/route.ts) |
-| Worker tick | Vercel cron (`vercel.json`) + `pg_cron` + `pg_net` redundancy | [`vercel.json`](vercel.json) · [`supabase/migrations/0002_worker_config.sql`](supabase/migrations/0002_worker_config.sql) |
+| Worker tick | `pg_cron` + `pg_net` every 15 s, calls `/api/worker` with the configured secret | [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) · [`supabase/migrations/0002_worker_config.sql`](supabase/migrations/0002_worker_config.sql) |
 | Matcher (math) | Cosine + 1-hop skill-graph jaccard + experience penalty | [`src/lib/scoring/matcher.ts`](src/lib/scoring/matcher.ts) |
 | Auditor (math) | Pedigree-vs-skill median delta + non-traditional flags | [`src/lib/scoring/auditor.ts`](src/lib/scoring/auditor.ts) |
 | Insights | Delta-Based RAG (matched + missing skill nodes only) | [`src/lib/ai/insights.ts`](src/lib/ai/insights.ts) |
@@ -146,8 +146,8 @@ backing store.
 
 ### What `vercel.json` and `next.config.ts` already do for you
 
-- `vercel.json` pins per-route `maxDuration` (5 minutes for ingest and worker, smaller for fast routes).
-- Vercel cron pings `/api/worker` every minute as a serverless-native fallback to `pg_cron`.
+- `vercel.json` pins per-route `maxDuration` (60 s — within the Hobby plan cap; raise to 300 s on Pro if you want larger batches per invocation).
+- The worker is driven by **`pg_cron` inside Supabase** every 15 s — no Vercel cron needed (Hobby is limited to one cron run per day, which is too coarse for this pipeline). Pro users can add a Vercel cron as a redundant safety net.
 - `next.config.ts` raises the Server Action body cap to **20 MB** (so a 20-CV batch fits) and marks `unpdf` + `mammoth` as `serverExternalPackages` so their native/wasm assets resolve on Vercel's Node runtime.
 - CV text is extracted at ingest and persisted on the candidate row (`raw_text`), so the worker — a separate function invocation with its own ephemeral `/tmp` — never needs a shared filesystem.
 
