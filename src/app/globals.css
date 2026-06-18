@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Soft lime mint background — Wenance light palette */
+  --color-bg: #ecfbd6;
+  --color-bg-2: #dff7bd;
+
+  /* Glass surfaces — white over lime wash */
+  --color-surface: rgba(255, 255, 255, 0.75);
+  --color-surface-solid: #ffffff;
+  --color-surface-2: rgba(255, 255, 255, 0.62);
+  --color-surface-3: rgba(244, 255, 224, 0.72);
+
+  /* Borders — forest tinted */
+  --color-border: rgba(14, 46, 30, 0.08);
+  --color-border-strong: rgba(14, 46, 30, 0.16);
+  --color-border-warm: rgba(98, 203, 53, 0.32);
+
+  /* Text — softened medium-forest greens */
+  --color-ink: #1f4d33;
+  --color-ink-2: #356b48;
+  --color-muted: #7a9785;
+  --color-muted-2: #a8c4b3;
+
+  /* Lime / neon green brand ramp */
+  --color-brand-50: #eefff2;
+  --color-brand-100: #d4ffc4;
+  --color-brand-200: #b8ff97;
+  --color-brand-300: #9bff6b;
+  --color-brand-400: #7ee84f;
+  --color-brand-500: #62cb35;
+  --color-brand-600: #46a020;
+  --color-brand-700: #368017;
+  --color-brand-800: #2c7212;
+
+  /* Status */
+  --color-success-50: rgba(34, 197, 94, 0.16);
+  --color-success-500: #16a34a;
+  --color-success-600: #15803d;
+
+  --color-danger-50: rgba(239, 68, 68, 0.14);
+  --color-danger-500: #dc2626;
+  --color-danger-600: #b91c1c;
+
+  --color-amber-50: rgba(245, 158, 11, 0.16);
+  --color-amber-500: #d97706;
+  --color-amber-600: #b45309;
+
+  /* legacy aliases (kept so existing palette usages still resolve sensibly) */
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #0d9488;
+  --color-emerald-500: #16a34a;
+  --color-rose-500: #dc2626;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Soft drop shadows on light surfaces */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 8px 22px rgba(14, 46, 30, 0.08);
+  --shadow-card-hover: 0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 14px 34px rgba(14, 46, 30, 0.14);
+  --shadow-pop: 0 24px 60px rgba(14, 46, 30, 0.20);
+  --shadow-brand: 0 8px 26px rgba(98, 203, 53, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --shadow-brand-soft: 0 10px 32px rgba(98, 203, 53, 0.26);
+
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  font-feature-settings:
+    "cv11" on,
+    "ss01" on;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Ambient lime glow vignette — softer on a light background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      60% 50% at 85% 100%,
+      rgba(155, 255, 107, 0.34) 0%,
+      rgba(155, 255, 107, 0.10) 40%,
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 45% at 8% 0%,
+      rgba(212, 255, 196, 0.55) 0%,
+      transparent 60%
+    );
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* tabular numbers everywhere we show stats */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* glass card surface — applied via class for non-Card elements */
+.glass {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.85),
+      rgba(255, 255, 255, 0.65)
+    );
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-strong {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 255, 255, 0.82)
+    );
+  border: 1px solid var(--color-border-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* subtle pattern for empty states */
+.bg-dots {
+  background-image: radial-gradient(
+    rgba(14, 46, 30, 0.10) 1px,
+    transparent 1px
+  );
+  background-size: 14px 14px;
+}
+
+.bg-brand-soft {
+  background: radial-gradient(
+    120% 100% at 100% 0%,
+    rgba(155, 255, 107, 0.45) 0%,
+    rgba(155, 255, 107, 0.10) 50%,
+    transparent 100%
+  );
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(14, 46, 30, 0.24) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(14, 46, 30, 0.18);
+  border-radius: 9999px;
+}
+
+/* Recharts tweaks */
+.recharts-default-tooltip {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border-strong) !important;
+  box-shadow: var(--shadow-pop) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: var(--color-ink) !important;
+}
+.recharts-tooltip-item,
+.recharts-tooltip-label {
+  color: var(--color-ink) !important;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(14, 46, 30, 0.04) 0%,
+    rgba(14, 46, 30, 0.10) 50%,
+    rgba(14, 46, 30, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+::selection {
+  background: rgba(155, 255, 107, 0.55);
+  color: #1f4d33;
+}
