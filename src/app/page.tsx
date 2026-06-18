@@ -7,7 +7,6 @@ import {
   ArrowUpRight,
   Scan as ScanText,
   Target01 as Target,
-  Zap,
 } from "@untitledui/icons";
 import { listJobs } from "@/lib/db/store";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,72 +162,38 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle icon={<Briefcase className="h-3.5 w-3.5" />}>
-              Recent jobs
-            </CardTitle>
-            <Link
-              href="/jobs"
-              className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-brand-700 hover:text-brand-800"
-            >
-              View all <ArrowUpRight className="h-3 w-3" />
-            </Link>
-          </CardHeader>
-          <CardBody>
-            {jobs.length === 0 ? (
-              <EmptyState
-                icon={<Briefcase className="h-5 w-5" />}
-                title="No jobs yet"
-                description="Create your first shortlister run to see ranked candidates, gaps, and an automatic bias audit."
-                action={
-                  <Link
-                    href="/jobs/new"
-                    className="inline-flex h-11 items-center gap-1.5 rounded-full bg-gradient-to-b from-brand-300 via-brand-400 to-brand-500 px-6 text-[13.5px] font-semibold text-ink shadow-[var(--shadow-brand)]"
-                  >
-                    Start a job
-                  </Link>
-                }
-              />
-            ) : (
-              <JobsTable jobs={jobs.slice(0, 8)} />
-            )}
-          </CardBody>
-        </Card>
-
-        <PromoCard />
-      </div>
-    </div>
-  );
-}
-
-function PromoCard() {
-  return (
-    <div className="glass relative overflow-hidden rounded-[20px] p-6 shadow-[var(--shadow-card)]">
-      <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand-500/30 blur-3xl" />
-      <div className="relative">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-border-strong bg-[rgba(14,46,30,0.05)] px-2.5 py-1 text-[11px] font-semibold text-ink-2">
-          <Zap className="h-3 w-3 text-brand-700" /> Save 12%
-        </div>
-        <div className="mt-4 flex items-end gap-2">
-          <span className="text-[16px] font-medium text-muted">$</span>
-          <span className="text-[44px] font-semibold leading-none tracking-tight text-ink">
-            80
-          </span>
-          <span className="mb-1 text-[12px] text-muted">/ month</span>
-        </div>
-        <p className="mt-3 max-w-[230px] text-[12.5px] text-muted">
-          Unlimited evaluations, embedding cache, and team workspaces.
-        </p>
-        <Link
-          href="/pricing"
-          className="mt-5 inline-flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-b from-brand-300 via-brand-400 to-brand-500 px-5 text-[13px] font-semibold text-ink shadow-[var(--shadow-brand)]"
-        >
-          Upgrade
-          <ArrowUpRight className="h-[14px] w-[14px]" />
-        </Link>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle icon={<Briefcase className="h-3.5 w-3.5" />}>
+            Recent jobs
+          </CardTitle>
+          <Link
+            href="/jobs"
+            className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-brand-700 hover:text-brand-800"
+          >
+            View all <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </CardHeader>
+        <CardBody>
+          {jobs.length === 0 ? (
+            <EmptyState
+              icon={<Briefcase className="h-5 w-5" />}
+              title="No jobs yet"
+              description="Create your first shortlister run to see ranked candidates, gaps, and an automatic bias audit."
+              action={
+                <Link
+                  href="/jobs/new"
+                  className="inline-flex h-11 items-center gap-1.5 rounded-full bg-gradient-to-b from-brand-300 via-brand-400 to-brand-500 px-6 text-[13.5px] font-semibold text-ink shadow-[var(--shadow-brand)]"
+                >
+                  Start a job
+                </Link>
+              }
+            />
+          ) : (
+            <JobsTable jobs={jobs.slice(0, 8)} />
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 }
